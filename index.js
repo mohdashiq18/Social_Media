@@ -1,4 +1,8 @@
 const express = require("express");
+require("dotenv").config();
+const PORT=process.env.PORT
+const {Connect} =require("./Config/Config")
+const {UserModel} =require("./Model/UserModel")
 const passport = require("passport");
 const expressSession=require("express-session")
 const FacebookStrategy =require("passport-facebook").Strategy;
@@ -40,10 +44,30 @@ app.get("/auth/facebook",passport.authenticate('facebook',{scope:["email"]}))
 app.get("/",(req,res)=>{
   res.send("Home")
 })
-app.get("/facebook",passport.authenticate('facebook'),(req,res)=>{
-    res.send(req.user?req.user:"No logged in")
+app.get("/facebook",passport.authenticate('facebook'),async (req,res)=>{
+    try{
+     
+      if(req.user){
+        const {id,name,email,first_name}=req.user._json
+        const payload={id,name,email,username:first_name}
+        const user=new UserModel(payload)
+        await user.save()
+        res.send("LogIn Successful")
+      }else{
+        res.send("No Logging")
+      }
+    }
+    catch{
+      res.send("err")
+    }
   })
 
-  app.listen(3000, () => {
-    console.log("server start");
+  app.listen(PORT, async() => {
+    try{
+     await Connect
+     console.log("Server Running")
+    }
+    catch(err){
+       console.log(err)
+    }
   });
