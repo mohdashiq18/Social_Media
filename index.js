@@ -2,6 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const PORT=process.env.PORT
 const {Connect} =require("./Config/Config")
+const {userRoute}=require("./Route/UserRoute")
 const {UserModel} =require("./Model/UserModel")
 const passport = require("passport");
 const expressSession=require("express-session")
@@ -48,11 +49,18 @@ app.get("/facebook",passport.authenticate('facebook'),async (req,res)=>{
     try{
      
       if(req.user){
-        const {id,name,email,first_name}=req.user._json
-        const payload={id,name,email,username:first_name}
+        const  data=await UserModel.find({userId:req.user.id})
+        
+        if(data[0]){
+          res.send("LogIn Successful")
+        }
+        else{
+          const {id,name,email,first_name}=req.user._json
+        const payload={userId:id,name:first_name,email,username:name}
         const user=new UserModel(payload)
         await user.save()
         res.send("LogIn Successful")
+        }
       }else{
         res.send("No Logging")
       }
@@ -61,7 +69,7 @@ app.get("/facebook",passport.authenticate('facebook'),async (req,res)=>{
       res.send("err")
     }
   })
-
+ app.use("/facebook",userRoute)
   app.listen(PORT, async() => {
     try{
      await Connect
